@@ -3,5 +3,6 @@ tmp/
 logs/
 .calva/
 .lein-env
+.lein-repl-history
 .nrepl-port
 profiles.clj
