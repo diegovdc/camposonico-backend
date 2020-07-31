@@ -1,12 +1,13 @@
-(ns jetty-web-sockets.endpoints.freesound-test
-  (:require [clojure.test :refer :all]
-            [io.pedestal.http :as http]
+(ns camposonico-backend.endpoints.freesound-test
+  (:require [camposonico-backend.endpoints.freesound :as freesound]
+            [camposonico-backend.service :as service]
+            [camposonico-backend.test-utils :refer [make-service url-for]]
             [clojure.data.json :as json]
+            [clojure.test :refer :all]
+            [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.test :refer :all]
-            [jetty-web-sockets.endpoints.freesound :as freesound]
-            [jetty-web-sockets.test-utils :refer [url-for make-service]]
-            [jetty-web-sockets.service :as service]))
+            [io.pedestal.test :refer :all]))
+
 (comment (require '[clj-utils.core :refer [spy]]))
 
 (def service (make-service (assoc service/service ::http/routes freesound/routes)))

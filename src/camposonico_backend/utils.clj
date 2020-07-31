@@ -1,4 +1,4 @@
-(ns jetty-web-sockets.utils
+(ns camposonico-backend.utils
   (:require [clojure.spec.alpha :as s]))
 
 (defn try-or-throw

@@ -1,4 +1,4 @@
-(ns jetty-web-sockets.endpoints.freesound
+(ns camposonico-backend.endpoints.freesound
   (:require [environ.core :refer [env]]
             [clj-http.client :as http]
             [clojure.core.async :as a]

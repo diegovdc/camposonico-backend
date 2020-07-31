@@ -1,7 +1,7 @@
-(ns jetty-web-sockets.server
-  (:gen-class) ; for -main method in uberjar
-  (:require [io.pedestal.http :as server]
-            [jetty-web-sockets.service :as service]))
+(ns camposonico-backend.server
+  (:gen-class)
+  (:require [camposonico-backend.service :as service]
+            [io.pedestal.http :as server]))
 
 ;; This is an adapted service map, that can be started and stopped
 ;; From the REPL you can call server/start and server/stop on this service

@@ -1,12 +1,12 @@
-(ns jetty-web-sockets.service-test
-  (:require [clojure.data.json :as json]
+(ns camposonico-backend.service-test
+  (:require [camposonico-backend.service :as service]
+            [camposonico-backend.test-utils :refer [make-service url-for]]
+            [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.test :refer :all]
-            [jetty-web-sockets.test-utils :refer [url-for make-service]]
-            [jetty-web-sockets.service :as service]))
+            [io.pedestal.test :refer :all]))
 
 (comment (require '[clj-utils.core :refer [spy]]))
 

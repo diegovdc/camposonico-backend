@@ -1,5 +1,7 @@
-(ns jetty-web-sockets.service
-  (:require [clojure.core.async :as async]
+(ns camposonico-backend.service
+  (:require [camposonico-backend.endpoints.freesound :as freesound]
+            [camposonico-backend.utils :refer [try-or-throw validate-spec]]
+            [clojure.core.async :as async]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
             [clojure.spec.alpha :as s]
@@ -10,9 +12,7 @@
             [io.pedestal.interceptor.chain :as chain]
             [io.pedestal.interceptor.error :as error]
             [io.pedestal.log :as log]
-            [jetty-web-sockets.utils :refer [try-or-throw validate-spec]]
-            [ring.util.response :as ring-resp]
-            [jetty-web-sockets.endpoints.freesound :as freesound])
+            [ring.util.response :as ring-resp])
   (:import org.eclipse.jetty.websocket.api.Session))
 
 (comment (require '[clj-utils.core :refer [spy]]))
