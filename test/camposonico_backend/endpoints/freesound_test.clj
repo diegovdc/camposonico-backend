@@ -3,10 +3,10 @@
             [camposonico-backend.service :as service]
             [camposonico-backend.test-utils :refer [make-service url-for]]
             [clojure.data.json :as json]
-            [clojure.test :refer :all]
+            [clojure.test :refer [deftest is]]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.test :refer :all]))
+            [io.pedestal.test :refer [response-for]]))
 
 (comment (require '[clj-utils.core :refer [spy]]))
 
@@ -16,8 +16,8 @@
 
 (deftest freesound-get-sounds-test
   (let [res (response-for (service)
-                          :get (str (url-for* ::freesound/get-sounds)
-                                    "?query=ocean&page=1"))]
+                          :get (url-for* ::freesound/get-sounds
+                                         :query-params {:query "ocean" :page 1}))]
     (is (= 200 (:status res)))
     (is (= #{"count" "next" "results" "previous"}
            (-> res :body json/read-str keys set)))))

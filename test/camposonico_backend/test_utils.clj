@@ -13,6 +13,6 @@
 
 
 ;; Create the test url generator
-(defn url-for [routes path]
+(defn url-for [routes path & args]
   "Test url generator."
-  ((route/url-for-routes routes) path))
+  (apply (route/url-for-routes routes) path args))

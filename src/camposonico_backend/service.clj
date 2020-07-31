@@ -1,32 +1,15 @@
 (ns camposonico-backend.service
   (:require [camposonico-backend.endpoints.freesound :as freesound]
-            [camposonico-backend.utils :refer [try-or-throw validate-spec]]
+            [environ.core :refer [env]]
             [clojure.core.async :as async]
-            [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
-            [clojure.spec.alpha :as s]
             [io.pedestal.http :as http]
-            [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.jetty.websockets :as ws]
             [io.pedestal.http.route :as route]
-            [io.pedestal.interceptor.chain :as chain]
-            [io.pedestal.interceptor.error :as error]
             [io.pedestal.log :as log]
             [ring.util.response :as ring-resp])
   (:import org.eclipse.jetty.websocket.api.Session))
 
 (comment (require '[clj-utils.core :refer [spy]]))
-
-(defonce db-url "postgresql://postgres:root@localhost:5432/camposonico")
-
-
-(defn response [status body & {:as headers}]
-  {:status status :body body :headers headers})
-
-(def ok       (partial response 200))
-(def created  (partial response 201))
-(def accepted (partial response 202))
-
 
 (defn about-page
   [request]
@@ -34,51 +17,9 @@
                               (clojure-version)
                               (route/url-for ::about-page))))
 
-(s/def ::author (s/nilable (s/and string? #(<= (count %) 15))))
-(s/def ::history string?)
-
-(def validate-input
-  {:name ::validate-input
-   :enter
-   (fn [ctx]
-     (let [{:keys [history author]} (-> ctx :request :json-params)
-           parsed-history (try-or-throw json/read-str "History is invalid" history)]
-       (do (validate-spec ::author author "Author name must not exceed 15 characters in length")
-           ;; TODO validate history correctly
-           (validate-spec ::history parsed-history "History is invalid"))
-       ctx))})
-
-(def insert-history
-  {:name ::insert-history
-   :enter
-   (fn [ctx]
-     (let [{:keys [author history]} (-> ctx :request :json-params)]
-       (jdbc/insert! db-url :histories {:author author
-                                        :history history})
-       (assoc ctx :response (created nil))))})
-
-(comment (insert-history {:json-params {:author nil :history "\"Hello \""}}))
-
-
 (defn home-page
   [request]
   (ring-resp/response "Hello World!"))
-
-(def on-history-create-error {:name :on-error
-                              :error (fn [ctx ex] ex)})
-(def on-history-create-error
-  (error/error-dispatch
-   [ctx ex]
-   [{:exception-type :org.postgresql.util.PSQLException :interceptor ::insert-history}]
-   (assoc ctx :response {:status 500 :body "Could not save history"})
-   [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::validate-input}]
-   (assoc ctx :response {:status 422 :body (:message (ex-data ex))})
-   :else (assoc ctx ::chain/error ex)))
-
-(def create-history [on-history-create-error
-                     (body-params/body-params)
-                     validate-input
-                     insert-history])
 
 (def routes
   ;; Defines "/" and "/about" routes with their associated :get handlers.
@@ -148,5 +89,6 @@
               ;; Either :jetty, :immutant or :tomcat (see comments in project.clj)
               ::http/type :jetty
               ::http/container-options {:context-configurator #(ws/add-ws-endpoints % ws-paths)}
-              ;;::http/host "localhost"
-              ::http/port 8080})
+              ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
+              ::http/host "0.0.0.0"
+              ::http/port (env :port 3000)})

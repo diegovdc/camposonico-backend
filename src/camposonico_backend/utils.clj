@@ -13,3 +13,10 @@
 (defn validate-spec [spec val error-msg]
   (if (s/valid? spec val) val
       (throw (ex-info error-msg {spec val :message error-msg}))))
+
+(defn response [status body & {:as headers}]
+  {:status status :body body :headers headers})
+
+(def ok       (partial response 200))
+(def created  (partial response 201))
+(def accepted (partial response 202))

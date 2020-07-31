@@ -29,8 +29,9 @@
 (defn -main
   "The entry-point for 'lein run'"
   [& args]
-  (println "\nCreating your server...")
+  (println "\nStarting production server...")
   (server/start runnable-service))
+
 (comment
   (def server (run-dev))
   (server/stop server))

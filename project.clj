@@ -27,6 +27,8 @@
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   ;; :pedantic? :abort
-  :profiles {:dev {:aliases {"run-dev" ["trampoline" "run" "-m" "jetty-web-sockets.server/run-dev"]}}
-             :uberjar {:aot [jetty-web-sockets.server]}}
-  :main ^{:skip-aot true} jetty-web-sockets.server)
+  :uberjar-name "camposonico-backend.jar"
+  :profiles {:production {:env {:production true}}
+             ;; :dev {:aliases {"run-dev" ["trampoline" "run" "-m" "jetty-web-sockets.server/run-dev"]}}
+             :uberjar {:aot [camposonico-backend.server]}}
+  :main ^{:skip-aot true} camposonico-backend.server)
