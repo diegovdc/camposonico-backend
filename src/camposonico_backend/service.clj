@@ -92,4 +92,4 @@
               ::http/container-options {:context-configurator #(ws/add-ws-endpoints % ws-paths)}
               ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
               ::http/host "0.0.0.0"
-              ::http/port (env :port 3000)})
+              ::http/port (read-string (env :port "3000"))})
