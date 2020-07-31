@@ -1,6 +1,7 @@
 (ns camposonico-backend.service
   (:require [camposonico-backend.endpoints.freesound :as freesound]
             [environ.core :refer [env]]
+            [camposonico-backend.endpoints.histories.core :as histories]
             [clojure.core.async :as async]
             [io.pedestal.http :as http]
             [io.pedestal.http.jetty.websockets :as ws]
@@ -28,7 +29,7 @@
   (route/expand-routes
    #{["/" :get home-page :route-name :home]
      ["/about" :get about-page :route-name ::about-page]
-     ["/history" :post create-history :route-name ::create-history]
+     ["/history" :post histories/create-history :route-name ::create-history]
      ["/freesound/" :get freesound/get-sounds :route-name ::get-sounds]}))
 
 (def ws-clients (atom {}))
