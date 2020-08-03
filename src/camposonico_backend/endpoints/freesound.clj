@@ -42,4 +42,4 @@
 
 (def get-sounds [(body-params/body-params) make-query])
 
-(def routes (route/expand-routes #{["/freesound/" :get get-sounds :route-name ::get-sounds]}))
+(def routes #{["/freesound/" :get get-sounds :route-name ::get-sounds]})

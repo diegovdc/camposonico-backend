@@ -1,5 +1,7 @@
 (ns camposonico-backend.utils
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s])
+  (:import java.text.SimpleDateFormat
+           java.util.TimeZone))
 
 (defn try-or-throw
   ([f message data] (try-or-throw f message (constantly nil) data))
@@ -20,3 +22,10 @@
 (def ok       (partial response 200))
 (def created  (partial response 201))
 (def accepted (partial response 202))
+(def not-found (partial response 404))
+
+(def iso-formater (let [sdf (SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")]
+                    (.setTimeZone sdf (TimeZone/getTimeZone "z"))
+                    sdf))
+(defn java-date->iso-string [date]
+  (.format iso-formater date))

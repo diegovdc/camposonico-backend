@@ -10,13 +10,13 @@
 
 (comment (require '[clj-utils.core :refer [spy]]))
 
-(def service (make-service (assoc service/service ::http/routes freesound/routes)))
+(def service (make-service #'service/service))
 
-(def url-for* (partial url-for freesound/routes))
+(def url-for* (url-for (route/expand-routes (service/routes))))
 
 (deftest freesound-get-sounds-test
   (let [res (response-for (service)
-                          :get (url-for* ::freesound/get-sounds
+                          :get (url-for* ::service/get-sounds
                                          :query-params {:query "ocean" :page 1}))]
     (is (= 200 (:status res)))
     (is (= #{"count" "next" "results" "previous"}

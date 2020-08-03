@@ -9,10 +9,11 @@
             [io.pedestal.test :refer :all]))
 
 (defn make-service [service]
-  (fn [] (::http/service-fn (http/create-servlet service))))
+  (fn [] (::http/service-fn (http/create-servlet (deref service)))))
 
 
 ;; Create the test url generator
-(defn url-for [routes path & args]
+(defn url-for [routes]
   "Test url generator."
-  (apply (route/url-for-routes routes) path args))
+  (fn  [path & args]
+    (apply (route/url-for-routes routes) path args)))

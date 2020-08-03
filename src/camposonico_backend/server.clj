@@ -1,7 +1,8 @@
 (ns camposonico-backend.server
   (:gen-class)
   (:require [camposonico-backend.service :as service]
-            [io.pedestal.http :as server]))
+            [io.pedestal.http :as server]
+            [io.pedestal.http.route :as route]))
 
 ;; This is an adapted service map, that can be started and stopped
 ;; From the REPL you can call server/start and server/stop on this service
@@ -17,7 +18,7 @@
               ::server/join? false
               ;; Routes can be a function that resolve routes,
               ;;  we can use this to set the routes to be reloadable
-              ::server/routes #(deref #'service/routes)
+              ::server/routes #(route/expand-routes (service/routes))
               ;; all origins are allowed in dev mode
               ::server/allowed-origins {:creds true :allowed-origins (constantly true)}})
       ;; Wire up interceptor chains
@@ -26,6 +27,12 @@
       server/create-server
       server/start))
 
+(defonce dev-server (atom nil))
+
+(defn restart []
+  (when @dev-server (server/stop @dev-server))
+  (reset! dev-server (run-dev)))
+
 (defn -main
   "The entry-point for 'lein run'"
   [& args]
@@ -33,24 +40,4 @@
   (server/start runnable-service))
 
 (comment
-  (def server (run-dev))
-  (server/stop server))
-;; If you package the service up as a WAR,
-;; some form of the following function sections is required (for io.pedestal.servlet.ClojureVarServlet).
-
-;;(defonce servlet  (atom nil))
-;;
-;;(defn servlet-init
-;;  [_ config]
-;;  ;; Initialize your app here.
-;;  (reset! servlet  (server/servlet-init service/service nil)))
-;;
-;;(defn servlet-service
-;;  [_ request response]
-;;  (server/servlet-service @servlet request response))
-;;
-;;(defn servlet-destroy
-;;  [_]
-;;  (server/servlet-destroy @servlet)
-;;  (reset! servlet nil))
-;;
+  (server/stop @dev-server))

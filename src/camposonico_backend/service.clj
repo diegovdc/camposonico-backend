@@ -1,8 +1,9 @@
 (ns camposonico-backend.service
   (:require [camposonico-backend.endpoints.freesound :as freesound]
-            [environ.core :refer [env]]
-            [camposonico-backend.endpoints.histories.core :as histories]
+            [camposonico-backend.endpoints.histories.create-history :refer [create-history]]
+            [camposonico-backend.endpoints.histories.get-history :refer [get-history]]
             [clojure.core.async :as async]
+            [environ.core :refer [env]]
             [io.pedestal.http :as http]
             [io.pedestal.http.jetty.websockets :as ws]
             [io.pedestal.http.route :as route]
@@ -22,15 +23,12 @@
   [request]
   (ring-resp/response "Hello World!"))
 
-(def routes
-  ;; Defines "/" and "/about" routes with their associated :get handlers.
-  ;; The interceptors defined after the verb map (e.g., {:get home-page}
-  ;; apply to / and its children (/about).
-  (route/expand-routes
-   #{["/" :get home-page :route-name :home]
-     ["/about" :get about-page :route-name ::about-page]
-     ["/history" :post histories/create-history :route-name ::create-history]
-     ["/freesound/" :get freesound/get-sounds :route-name ::get-sounds]}))
+(defn routes []
+  #{["/" :get home-page :route-name :home]
+    ["/about" :get about-page :route-name ::about-page]
+    ["/history" :post create-history :route-name ::create-history]
+    ["/history/:id" :get get-history :route-name ::get-history]
+    ["/freesound/" :get freesound/get-sounds :route-name ::get-sounds]})
 
 (def ws-clients (atom {}))
 
@@ -74,7 +72,7 @@
               ;; dev-mode. If you do, many other keys for configuring
               ;; default interceptors will be ignored.
               ;; ::http/interceptors []
-              ::http/routes routes
+              ::http/routes (routes)
 
               ;; Uncomment next line to enable CORS support, add
               ;; string(s) specifying scheme, host and port for
