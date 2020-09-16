@@ -38,7 +38,7 @@
        result-chan))})
 
 (comment
-  (a/<!! ((make-query :enter) {:request {:query-params {:query"ocean field recording" :page 1000}}})))
+  (a/<!! ((make-query :enter) {:request {:query-params {:query"ocean field recording" :page 1}}})))
 
 (def get-sounds [(body-params/body-params) make-query])
 

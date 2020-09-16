@@ -40,4 +40,5 @@
   (server/start runnable-service))
 
 (comment
+  (run-dev)
   (server/stop @dev-server))

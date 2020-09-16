@@ -4,9 +4,7 @@
             [clojure.core.async :as a]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
-            [io.pedestal.interceptor.chain :as chain]
-            [io.pedestal.interceptor.error :as error]))
+            [clojure.string :as str]))
 
 (comment (require '[clj-utils.core :refer [spy]]))
 
@@ -24,3 +22,11 @@
                       (assoc ctx :response (not-found "Could not find history"))))))})
 
 (def get-history [#'get-history*])
+
+(comment
+  (-> {:request {:path-params {:id "43"}}}
+      ((get-history* :enter))
+      a/<!!
+      :response
+      :body
+      json/read-str))

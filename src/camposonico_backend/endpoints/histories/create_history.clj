@@ -19,7 +19,7 @@
 (defn validate-input-enter
   [ctx]
   (let [{:keys [history author title tags]} (-> ctx :request :json-params)
-        tags* (some-> tags (str/split #",") (->> (map str/trim)))
+        tags* (some-> tags (str/split #",") (->> (mapv str/trim)))
         parsed-history (try-or-throw (comp walk/keywordize-keys json/read-str) "History could not be parsed" history)]
     (do (validate-spec ::author author "Author name must not exceed 15 characters in length")
         (validate-spec ::title title "Title must not exceed 50 characters in length")
@@ -36,20 +36,22 @@
 (def insert-history
   {:name ::insert-history
    :enter (fn [ctx]
-            (jdbc/insert! db-url :histories (-> ctx ::data-to-insert))
+            (println "running")
+            (jdbc/insert! db-url :histories (-> ctx ::data-to-insert doall))
             (assoc ctx :response (created nil)))})
 
 
-(comment (insert-history {:json-params {:author nil :history "\"Hello \""}}))
+(comment ((:enter insert-history) {::data-to-insert (assoc @h :history "\"holi\""
+                                                           :tags ["a"])}))
 
 (def on-history-create-error
   (error/error-dispatch [ctx ex]
-   [{:exception-type :org.postgresql.util.PSQLException :interceptor ::insert-history}]
-   (do (log/error :exception ex)
-       (assoc ctx :response {:status 500 :body "Could not save history"}))
-   [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::validate-input}]
-   (assoc ctx :response {:status 422 :body (:message (ex-data ex))})
-   :else (assoc ctx ::chain/error ex)))
+                        [{:exception-type :org.postgresql.util.PSQLException :interceptor ::insert-history}]
+                        (do (log/error :exception ex)
+                            (assoc ctx :response {:status 500 :body "Could not save history"}))
+                        [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::validate-input}]
+                        (assoc ctx :response {:status 422 :body (:message (ex-data ex))})
+                        :else (assoc ctx ::chain/error ex)))
 
 (def create-history [on-history-create-error
                      (body-params/body-params)

@@ -8,7 +8,8 @@
             [io.pedestal.http.jetty.websockets :as ws]
             [io.pedestal.http.route :as route]
             [io.pedestal.log :as log]
-            [ring.util.response :as ring-resp])
+            [ring.util.response :as ring-resp]
+            [camposonico-backend.jdbc.protocol-extensions :as jdbc-protocol])
   (:import org.eclipse.jetty.websocket.api.Session))
 
 (comment (require '[clj-utils.core :refer [spy]]))
@@ -63,6 +64,9 @@
           :on-error (fn [t] (log/error :msg "WS Error happened" :exception t))
           :on-close (fn [num-code reason-text]
                       (log/info :msg "WS Closed:" :reason reason-text))}})
+
+;; NOTE side effect
+(jdbc-protocol/run-extensions!)
 
 ;; Consumed by jetty-web-sockets.server/create-server
 ;; See http/default-interceptors for additional options you can configure
