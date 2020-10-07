@@ -1,14 +1,14 @@
 (ns camposonico-backend.service
-  (:require [camposonico-backend.endpoints.freesound :as freesound]
+  (:require [camposonico-backend.endpoints.collab-history.get-collab-history
+             :refer
+             [get-collab-history]]
+            [camposonico-backend.endpoints.freesound :as freesound]
             [camposonico-backend.endpoints.histories.create-history
              :refer
              [create-history]]
             [camposonico-backend.endpoints.histories.get-history
              :refer
              [get-history]]
-            [camposonico-backend.endpoints.collab-history.get-collab-history
-             :refer
-             [get-collab-history]]
             [camposonico-backend.jdbc.protocol-extensions :as jdbc-protocol]
             [camposonico-backend.ws-endpoints.core :refer [ws-paths]]
             [environ.core :refer [env]]

@@ -1,7 +1,7 @@
 (ns camposonico-backend.ws-endpoints.core
   (:require [camposonico-backend.ws-endpoints.chat
              :refer
-             [ws-clients new-ws-client on-text send-message-to-all!]]
+             [new-ws-client on-text send-message-to-all! ws-clients]]
             [camposonico-backend.ws-endpoints.collab
              :refer
              [new-ws-collab-client on-collab-text]]

@@ -1,7 +1,7 @@
 (ns camposonico-backend.endpoints.collab-history.get-collab-history
-  (:require [camposonico-backend.ws-endpoints.collab :refer [collab-data]]
+  (:require [camposonico-backend.utils :refer [java-date->iso-string not-found ok]]
+            [camposonico-backend.ws-endpoints.collab :refer [collab-data]]
             [clojure.core.async :as a]
-            [camposonico-backend.utils :refer [java-date->iso-string ok not-found]]
             [clojure.data.json :as json]))
 
 (comment (require '[clj-utils.core :refer [spy]]))
