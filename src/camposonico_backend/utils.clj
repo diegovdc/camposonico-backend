@@ -29,3 +29,8 @@
                     sdf))
 (defn java-date->iso-string [date]
   (.format iso-formater date))
+
+(defn now
+  "Returns the current time in ms"
+  []
+  (System/currentTimeMillis))

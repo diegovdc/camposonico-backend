@@ -1,16 +1,21 @@
 (ns camposonico-backend.service
   (:require [camposonico-backend.endpoints.freesound :as freesound]
-            [camposonico-backend.endpoints.histories.create-history :refer [create-history]]
-            [camposonico-backend.endpoints.histories.get-history :refer [get-history]]
-            [clojure.core.async :as async]
+            [camposonico-backend.endpoints.histories.create-history
+             :refer
+             [create-history]]
+            [camposonico-backend.endpoints.histories.get-history
+             :refer
+             [get-history]]
+            [camposonico-backend.endpoints.collab-history.get-collab-history
+             :refer
+             [get-collab-history]]
+            [camposonico-backend.jdbc.protocol-extensions :as jdbc-protocol]
+            [camposonico-backend.ws-endpoints.core :refer [ws-paths]]
             [environ.core :refer [env]]
             [io.pedestal.http :as http]
             [io.pedestal.http.jetty.websockets :as ws]
             [io.pedestal.http.route :as route]
-            [io.pedestal.log :as log]
-            [ring.util.response :as ring-resp]
-            [camposonico-backend.jdbc.protocol-extensions :as jdbc-protocol])
-  (:import org.eclipse.jetty.websocket.api.Session))
+            [ring.util.response :as ring-resp]))
 
 (comment (require '[clj-utils.core :refer [spy]]))
 
@@ -29,41 +34,8 @@
     ["/about" :get about-page :route-name ::about-page]
     ["/history" :post create-history :route-name ::create-history]
     ["/history/:id" :get get-history :route-name ::get-history]
-    ["/freesound/" :get freesound/get-sounds :route-name ::get-sounds]})
-
-(def ws-clients (atom {}))
-
-(defn new-ws-client
-  [ws-session send-ch]
-  (async/put! send-ch "This will be a text message")
-  (swap! ws-clients assoc ws-session send-ch))
-
-;; This is just for demo purposes
-(defn send-and-close! []
-  (let [[ws-session send-ch] (first @ws-clients)]
-    (async/put! send-ch "A message from the server")
-    ;; And now let's close it down...
-    (async/close! send-ch)
-    ;; And now clean up
-    (swap! ws-clients dissoc ws-session)))
-
-;; Also for demo purposes...
-(defn send-message-to-all!
-  [message]
-  (doseq [[^Session session channel] @ws-clients]
-    ;; The Pedestal Websocket API performs all defensive checks before sending,
-    ;;  like `.isOpen`, but this example shows you can make calls directly on
-    ;;  on the Session object if you need to
-    (when (.isOpen session)
-      (async/put! channel message))))
-
-(def ws-paths
-  {"/ws" {:on-connect (ws/start-ws-connection new-ws-client)
-          :on-text (fn [msg] (log/info :msg (str "A client sent - " msg)))
-          :on-binary (fn [payload offset length] (log/info :msg "Binary Message!" :bytes payload))
-          :on-error (fn [t] (log/error :msg "WS Error happened" :exception t))
-          :on-close (fn [num-code reason-text]
-                      (log/info :msg "WS Closed:" :reason reason-text))}})
+    ["/freesound/" :get freesound/get-sounds :route-name ::get-sounds]
+    ["/collab-history/:id" :get get-collab-history :route-name ::get-collab-history]})
 
 ;; NOTE side effect
 (jdbc-protocol/run-extensions!)
@@ -91,7 +63,8 @@
 
               ;; Either :jetty, :immutant or :tomcat (see comments in project.clj)
               ::http/type :jetty
-              ::http/container-options {:context-configurator #(ws/add-ws-endpoints % ws-paths)}
+              ::http/container-options {:context-configurator
+                                        #(ws/add-ws-endpoints % ws-paths)}
               ::http/allowed-origins {:creds true :allowed-origins (constantly true)}
               ::http/host "0.0.0.0"
-              ::http/port (read-string (env :port "3000"))})
+              ::http/port (read-string (env :port "3456"))})

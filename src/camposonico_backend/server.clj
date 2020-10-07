@@ -31,7 +31,8 @@
 
 (defn restart []
   (when @dev-server (server/stop @dev-server))
-  (reset! dev-server (run-dev)))
+  (reset! dev-server (run-dev))
+  "-----------(re)started server")
 
 (defn -main
   "The entry-point for 'lein run'"
@@ -40,5 +41,5 @@
   (server/start runnable-service))
 
 (comment
-  (run-dev)
+  (restart)
   (server/stop @dev-server))
