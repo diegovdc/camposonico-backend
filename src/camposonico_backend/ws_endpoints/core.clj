@@ -4,7 +4,7 @@
              [new-ws-client on-text send-message-to-all! ws-clients]]
             [camposonico-backend.ws-endpoints.collab
              :refer
-             [new-ws-collab-client on-collab-text]]
+             [on-connect new-ws-collab-client on-collab-text remove-closed-clients!]]
             [clojure.core.async :as async]
             [io.pedestal.http.jetty.websockets :as ws]
             [io.pedestal.log :as log]))
@@ -31,12 +31,10 @@
           :on-close (fn [num-code reason-text]
                       (log/info :msg "WS Closed:" :reason reason-text)
                       (swap! ws-clients #(filter (fn [[client _]] (.isOpen client)))))}
-   "/collab" {:on-connect (ws/start-ws-connection
-                           (fn [ws-session send-ch]
-                             (new-ws-collab-client ws-session send-ch)))
+   "/collab" {:on-connect (ws/start-ws-connection #'on-connect)
               :on-text #'on-collab-text
               :on-binary (fn [payload offset length] (log/info :msg "Binary Message!" :bytes payload))
               :on-error (fn [t] (log/error :msg "WS Error happened" :exception t))
               :on-close (fn [num-code reason-text]
                           (log/info :msg "WS Closed:" :reason reason-text)
-                          (swap! ws-clients #(filter (fn [[client _]] (.isOpen client)))))}})
+                          (remove-closed-clients!))}})
