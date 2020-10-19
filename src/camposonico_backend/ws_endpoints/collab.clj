@@ -295,6 +295,13 @@
                     (merge (make-session-response ctx)
                            {:type :start-session
                             :session-action :create})))}))
+(def alert-when-invalid-password
+  (interceptor/interceptor
+   {:name ::alert-when-invalid-password
+    :enter (fn [{:keys [password valid-password?] :as ctx}]
+             (if (and (not (empty? password)) (not valid-password?))
+               (throw (ex-info "InvalidInputPassword" {:printable-error "The password you are trying to use is incorrect, please try again or leave the password field empty."}))
+               ctx))}))
 
 (def join-session-response
   (interceptor/interceptor
@@ -330,6 +337,7 @@
                                           create-session-response])
               :join (chain/enqueue ctx [validate-join-session
                                         set-username!
+                                        alert-when-invalid-password
                                         add-client-to-session!
                                         join-session-response])
               (throw (ex-info
@@ -348,6 +356,8 @@
    [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::set-username!}]
    (assoc ctx :response {:type :start-session :status 422 :body (:printable-error (ex-data ex))})
    [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::create-session!}]
+   (assoc ctx :response {:type :start-session :status 422 :body (:printable-error (ex-data ex))})
+   [{:exception-type :clojure.lang.ExceptionInfo :interceptor ::alert-when-invalid-password}]
    (assoc ctx :response {:type :start-session :status 422 :body (:printable-error (ex-data ex))})
    :else {:type :start-session :status 422 :body "An unknown error ocurred"}))
 
