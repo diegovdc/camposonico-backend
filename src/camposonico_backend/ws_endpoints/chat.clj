@@ -75,7 +75,7 @@
 
 (defn on-text [msg]
   #_(log/info :msg (str "A client sent - " msg))
-  (try (let [msg* (edn/read-string msg)]
+  #_(try (let [msg* (edn/read-string msg)]
          (condp = (:type msg*)
            :pong nil ;; Client is alive.
            :chat (send-message-to-all! (prepare-chat-message @ws-clients msg*))
