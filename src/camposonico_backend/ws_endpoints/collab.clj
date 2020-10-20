@@ -15,6 +15,9 @@
   (:import java.util.UUID
            org.eclipse.jetty.websocket.api.Session))
 
+;; TODO clean up this file
+;; TODO clean up old sessions
+
 (defn chan? [x] (= clojure.core.async.impl.channels.ManyToManyChannel (type x)))
 (def session? any?)                     ;; TODO maybe necessary to fix this
 
@@ -71,13 +74,12 @@
 
 (defn get-usernames* [collab-data-map]
   (->> collab-data-map :clients (map (juxt (comp :username second) first)) (into {})))
-(do
-  (def get-usernames
-    (interceptor/interceptor
-     {:name ::get-usernames
-      :enter (fn [ctx]
-               (->> ctx :collab-data deref get-usernames*))}))
-  ((:enter get-usernames) {:collab-data collab-data}))
+
+(def get-usernames
+  (interceptor/interceptor
+   {:name ::get-usernames
+    :enter (fn [ctx]
+             (->> ctx :collab-data deref get-usernames*))}))
 
 (defn remove-closed-clients! []
   (let [clients-to-remove
@@ -85,23 +87,14 @@
                   (when (= (type session)
                            org.eclipse.jetty.websocket.common.WebSocketSession )
                     (.isOpen ^Session session)))
-         (:clients @collab-data))
+                (:clients @collab-data))
         client-ids (map first clients-to-remove)]
     (println "Removing clients" client-ids)
     (doseq [[_ {:keys [channel]}] clients-to-remove]
       (try (a/close! channel) (catch Exception e (println "Couldn't close channel" e))))
     (swap! collab-data update :clients #(apply dissoc % client-ids))))
 
-(comment
-(remove-closed-clients!)
-  (def test-atom (atom {:b 1}))
-  (swap! test-atom assoc :a 2)
-  (swap! test-atom (fn [data]
-                     (if (data :a)
-                       (throw (ex-info "err" {}))
-                       (update data :b inc))))
-  (deref test-atom))
-(-> @collab-data :clients count)
+(comment (remove-closed-clients!))
 
 (defn send-to-all-except-originator! [{:keys [msg originator-id]}]
   (let [clients (-> @collab-data get-collab-clients (dissoc originator-id))]
@@ -153,7 +146,6 @@
                                         formatted-event)))})
 
 (defn on-collab-typing-event [msg]
-  (println msg)
   ;; TODO figure out session-id
   ;; TODO figure out editor-id management
   (let [session-id 1]
@@ -225,17 +217,17 @@
   (let [sessions (get-sessions* collab-data-map)]
     (not (nil? (sessions session-name)))))
 
-(do
-  (defn username-taken-by-other-user?
-    [collab-data-map client-id username]
-    (let [usernames (get-usernames* collab-data-map)]
-      (-> usernames (get username)
-          (#(and (not (nil? %))
-                 (not= % client-id))))))
-  (username-taken-by-other-user? {:clients {"a" {:username "b-un"}
-                                            "b" {}}}
-                                 "b"
-                                 "b-un"))
+
+(defn username-taken-by-other-user?
+  [collab-data-map client-id username]
+  (let [usernames (get-usernames* collab-data-map)]
+    (-> usernames (get username)
+        (#(and (not (nil? %))
+               (not= % client-id))))))
+(comment (username-taken-by-other-user? {:clients {"a" {:username "b-un"}
+                                                   "b" {}}}
+                                        "b"
+                                        "b-un"))
 
 (defn set-session!
   "Will throw if a session with that name already exists"
@@ -275,8 +267,6 @@
              (swap! collab-data assoc-in
                     [:clients client-id :session-name] session-name)
              ctx)}))
-(-> collab-data deref :clients first)
-((:enter add-client-to-session!) {:collab-data collab-data :client-id "9656bc7d-856f-4aed-87b5-0bb517ece720" :session-name "pepe"})
 
 (defn make-session-response
   [{:keys [session-name username password valid-password?]}]
@@ -321,12 +311,6 @@
       (swap! collab-data set-username!* client-id username)
       (assoc ctx :username-set? true))}))
 
-#_((:enter set-username!) {:collab-data (atom {:clients {"a" {:username "b-un"}
-                                                         "b" {}}})
-                           :client-id "b"
-                           :username "b-un"})
-
-
 (def process-session-action
   {:name ::process-session-action
    :enter (fn [ctx]
@@ -364,31 +348,15 @@
 (-> @collab-data)
 
 (defn start-session [msg]
-  (run-chain msg [on-start-session-error add-collab-data get-client process-session-action]))
-#_(do
-    #_(defn start-session [msg]
-        (-> msg :msg validate-start-session)
-        ( set-usernamex msg))
-    (println (run-chain
-              {:session-action :join,
-               :session-name "ssa",
-               :password "10",
-               :username "Saar",
-               :client-id "cf5c32e-4cc6-4004-b46a-f36191c2f7d7",
-               :type :start-session,
-               :opts {}}
-              [on-start-session-error add-collab-data process-session-action]))
-    #_(start-session {:msg {:session-action :join, :session-name "s", :password "1", :username "s"}
-                      :type :start-session
-                      :opts {:user-id "0972b065-f03a-401b-9fc2-3bcbd3f3ad60"}}))
+  (run-chain msg [on-start-session-error
+                  add-collab-data
+                  get-client
+                  process-session-action]))
 
 (def respond-pong
   {:name ::respond-pong
    :enter (fn [ctx] (assoc ctx :response {:type :still-connected?
                                          :timestamp (now)}))})
-
-(run-chain {:client-id "f3aa4668-b570-4579-b34a-cd4ed53649a0", :type :pong, :opts {}}
-           [add-collab-data get-client])
 
 (defn send-response-to-client! [{:keys [client response]}]
   (when-not response (log/error :response "Missing response `key`"))
@@ -413,8 +381,6 @@
 (defn chat-message [msg]
   (run-chain msg [add-collab-data get-client prepare-chat-message]))
 
-(chat-message {:client-id "9656bc7d-856f-4aed-87b5-0bb517ece720" :message "holi" :timestamp "now"})
-
 (defn on-collab-text [msg]
   (try (let [msg* (edn/read-string msg)]
          (when (= :start-session (msg* :type)) (log/info :collab-event msg*))
@@ -427,5 +393,4 @@
            :start-session  (send-response-to-client! (start-session msg*))
            :chat-message (send-to-all-recipients! (chat-message msg*))
            (log/error "Unknow message type on web-socket" msg)))
-       (catch Exception e (log/error "Could not read web-socket message" e)))
-  #_(send-message-to-all! (str {:type :default :msg (str "You said: " (:msg  (clojure.edn/read-string msg)))})))
+       (catch Exception e (log/error "Could not read web-socket message" e))))
